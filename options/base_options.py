@@ -66,6 +66,8 @@ class BaseOptions():
         parser.add_argument('--nef', type=int, default=16, help='# of encoder filters in the first conv layer')
         parser.add_argument('--use_vae', action='store_true', help='enable training with an image encoder.')
 
+        parser.add_argument('--num_outcomes', type=int, default=1)
+
         self.initialized = True
         return parser
 

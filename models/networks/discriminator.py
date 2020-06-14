@@ -93,7 +93,13 @@ class NLayerDiscriminator(BaseNetwork):
                           nn.LeakyReLU(0.2, False)
                           ]]
 
-        sequence += [[nn.Conv2d(nf, 1, kernel_size=kw, stride=1, padding=padw)]]
+        self.num_outcomes = opt.num_outcomes
+        if self.num_outcomes == 1:
+            sequence += [[nn.Conv2d(nf, 1, kernel_size=kw, stride=1, padding=padw)]]
+        else:
+            self.in_size = int(nf * 4 * 4)
+            self.fc = nn.Linear(self.in_size, self.num_outcomes, bias=False)
+            self.act = nn.Softmax()
 
         # We divide the layers into groups to extract intermediate layer outputs
         for n in range(len(sequence)):
@@ -112,6 +118,10 @@ class NLayerDiscriminator(BaseNetwork):
         for submodel in self.children():
             intermediate_output = submodel(results[-1])
             results.append(intermediate_output)
+        if self.num_outcomes > 1:
+            feat = intermediate_output.view(-1, self.in_size)
+            realness = self.act(self.fc(feat))
+            results.append(realness)
 
         get_intermediate_features = not self.opt.no_ganFeat_loss
         if get_intermediate_features:

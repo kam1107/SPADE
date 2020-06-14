@@ -141,7 +141,11 @@ class Pix2PixModel(torch.nn.Module):
         pred_fake, pred_real = self.discriminate(
             input_semantics, fake_image, real_image)
 
-        G_losses['GAN'] = self.criterionGAN(pred_fake, True,
+        if self.opt.gan_mode == 'categorical':
+            G_losses['GAN'] = self.criterionGAN(pred_fake, True,
+                                            for_discriminator=False, feat_real=pred_real)
+        else:    
+            G_losses['GAN'] = self.criterionGAN(pred_fake, True,
                                             for_discriminator=False)
 
         if not self.opt.no_ganFeat_loss:
