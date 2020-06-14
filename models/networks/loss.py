@@ -58,16 +58,16 @@ class GANLoss(nn.Module):
             unif = np.random.uniform(-1, 1, 1000)
             count, bins = np.histogram(unif, self.opt.num_outcomes)
             anchor1 = count / sum(count)
-            self.real_label_anchor = torch.zeros((input.shape[0], self.opt.num_outcomes), dtype=torch.float).cuda()\
-                 + torch.tensor(anchor1, dtype=torch.float).cuda()
-            return self.real_label_anchor
+            self.real_label_anchor = self.Tensor(anchor1).unsqueeze(0)
+            self.real_label_anchor.requires_grad_(False)
+            return self.real_label_anchor.repeat(input.shape[0]*input.shape[2]*input.shape[3], 1)
         else:
             gauss = np.random.normal(0, 0.1, 1000)
             count, bins = np.histogram(gauss, self.opt.num_outcomes)
             anchor0 = count / sum(count)
-            self.fake_label_anchor = torch.zeros((input.shape[0], self.opt.num_outcomes), dtype=torch.float).cuda()\
-                 + torch.tensor(anchor0, dtype=torch.float).cuda()
-            return self.fake_label_anchor
+            self.fake_label_anchor = self.Tensor(anchor0).unsqueeze(0)
+            self.fake_label_anchor.requires_grad_(False)
+            return self.fake_label_anchor.repeat(input.shape[0]*input.shape[2]*input.shape[3], 1)
 
     def get_zero_tensor(self, input):
         if self.zero_tensor is None:
@@ -86,6 +86,8 @@ class GANLoss(nn.Module):
             v_max = 1
             supports = torch.linspace(v_min, v_max, self.opt.num_outcomes).view(1, 1, self.opt.num_outcomes)
             delta = (v_max - v_min) / (self.opt.num_outcomes - 1)
+            feat = input.transpose(1,-1).flatten(start_dim=0, end_dim=2).contiguous()
+            
             if target_is_real:
                 skew = torch.zeros((batch_size, self.opt.num_outcomes)).cuda().fill_(1)
             else:
@@ -102,7 +104,7 @@ class GANLoss(nn.Module):
             skewed_anchor.view(-1).index_add_(0, (l + offset).view(-1), (target_anchor * (u.float() - b)).view(-1))  
             skewed_anchor.view(-1).index_add_(0, (u + offset).view(-1), (target_anchor * (b - l.float())).view(-1))  
 
-            loss = -(skewed_anchor * (input + 1e-16).log()).sum(-1).mean()
+            loss = -(skewed_anchor * (feat + 1e-16).log()).sum(-1).mean()
 
         elif self.gan_mode == 'original':  # cross entropy loss
             target_tensor = self.get_target_tensor(input, target_is_real)
