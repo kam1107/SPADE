@@ -118,6 +118,7 @@ class NLayerDiscriminator(BaseNetwork):
         for submodel in self.children():
             intermediate_output = submodel(results[-1])
             results.append(intermediate_output)
+            print(intermediate_output.shape)
         if self.num_outcomes > 1:
             feat = intermediate_output.view(-1, self.in_size)
             realness = self.act(self.fc(feat))
