@@ -138,11 +138,19 @@ class GANLoss(nn.Module):
         # a tensor, but list of tensors in case of multiscale discriminator
         if isinstance(input, list):
             loss = 0
-            for pred_i in input:
+            for i in range(len(input)):
+                pred_i = input[i]
                 if isinstance(pred_i, list):
                     pred_i = pred_i[-1]
-                loss_tensor = self.loss(pred_i, target_is_real, for_discriminator, feat_real)
-
+                
+                if feat_real is not None:
+                    target_i = feat_real[i]
+                    if isinstance(target_i, list):
+                        target_i = target_i[-1]
+                    loss_tensor = self.loss(pred_i, target_is_real, for_discriminator, target_i)
+                else:
+                    loss_tensor = self.loss(pred_i, target_is_real, for_discriminator)
+                
                 bs = 1 if len(loss_tensor.size()) == 0 else loss_tensor.size(0)
                 new_loss = torch.mean(loss_tensor.view(bs, -1), dim=1)
                 loss += new_loss
