@@ -16,11 +16,11 @@ class CocoDataset(Pix2pixDataset):
         parser.add_argument('--coco_no_portraits', action='store_true')
         parser.set_defaults(preprocess_mode='resize_and_crop')
         if is_train:
-            parser.set_defaults(load_size=286)
+            parser.set_defaults(load_size=158)
         else:
-            parser.set_defaults(load_size=256)
-        parser.set_defaults(crop_size=256)
-        parser.set_defaults(display_winsize=256)
+            parser.set_defaults(load_size=128)
+        parser.set_defaults(crop_size=128)
+        parser.set_defaults(display_winsize=128)
         parser.set_defaults(label_nc=182)
         parser.set_defaults(contain_dontcare_label=True)
         parser.set_defaults(cache_filelist_read=True)

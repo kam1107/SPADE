@@ -80,11 +80,13 @@ class GANLoss(nn.Module):
             if feat_real is None:
                 target_anchor = self.get_target_anchor(input, target_is_real)
             else:
-                target_anchor = feat_real.log_softmax(1).exp()
-            batch_size = input.shape[0]
+                target_anchor = feat_real.transpose(1,-1).flatten(start_dim=0, end_dim=2).contiguous()
+                target_anchor = target_anchor.log_softmax(1).exp()
+               
+            batch_size = input.shape[0] * input.shape[2] * input.shape[3]
             v_min = -1
             v_max = 1
-            supports = torch.linspace(v_min, v_max, self.opt.num_outcomes).view(1, 1, self.opt.num_outcomes)
+            supports = torch.linspace(v_min, v_max, self.opt.num_outcomes).view(1, 1, self.opt.num_outcomes).cuda()
             delta = (v_max - v_min) / (self.opt.num_outcomes - 1)
             feat = input.transpose(1,-1).flatten(start_dim=0, end_dim=2).contiguous()
             feat = feat.log_softmax(1).exp()
@@ -106,6 +108,7 @@ class GANLoss(nn.Module):
             skewed_anchor.view(-1).index_add_(0, (u + offset).view(-1), (target_anchor * (b - l.float())).view(-1))  
 
             loss = -(skewed_anchor * (feat + 1e-16).log()).sum(-1).mean()
+            return loss
 
         elif self.gan_mode == 'original':  # cross entropy loss
             target_tensor = self.get_target_tensor(input, target_is_real)
